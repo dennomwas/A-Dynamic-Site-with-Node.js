@@ -6,15 +6,28 @@ const homeRoute = (request, response) => {
     //if url == "/" && GET
     if (request.url === "/") {
         //show search
-        response.writeHead(200, {
-            'Content-Type': 'text/plain'
-        });
-        response.write("Header\n");
-        response.write("Search\n");
-        response.end('Footer\n');
+        if (request.method.toLowerCase() === "get") {
+            //show search
+            response.writeHead(200, header);
+            render.view("header", {}, response);
+            render.view("search", {}, response);
+            render.view("footer", {}, response);
+            response.end();
+        } else {
+            // get data from post body
+            request.on("data", postBody => {
+
+                // extract data from post body
+                let query = querystring.parse(postBody.toString());
+
+                // redirect to /username
+                response.writeHead(303, {
+                    "Location": "/" + query.username
+                });
+                response.end();
+            });
+        }
     }
-    //if url == "/" && POST
-    //redirect to /:username
 }
 
 // Handle HTTP route GET /:username i.e. /username
@@ -44,14 +57,22 @@ const userRoute = (request, response) => {
             }
 
             // simple response
-            response.write(`${values.username} has ${values.badges} badges`);
-            response.end('Footer\n');
+            response.writeHead(200, header);
+            render.view("header", {}, response);
+            render.view("profile", values, response);
+            render.view("footer", {}, response);
+            response.end();
         });
 
         //on "error"
         studentProfile.on("error", (error) => {
-            response.write(`${error.message}`);
-            response.end('Footer\n');
+            render.view("error", {
+                errorMessage: error.message
+            }, response);
+            render.view("header", {}, response);
+            render.view("search", {}, response);
+            render.view("footer", {}, response);
+            response.end()
         });
 
     }
